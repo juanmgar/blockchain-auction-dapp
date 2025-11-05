@@ -193,13 +193,20 @@ export default function Home() {
           <div><strong>Highest bid:</strong> {highestBid} BNB</div>
           <div><strong>Highest bidder:</strong> {highestBidder}</div>
           <div>
-            <strong>Ends on:</strong>{" "}
-            {auctionEndTime
-              ? new Date(auctionEndTime * 1000).toLocaleString(navigator.language, {
-                dateStyle: "full",
-                timeStyle: "short",
-              })
-              : "Loading..."}
+            <strong>Status:</strong>{" "}
+            {!auctionEndTime ? (
+              "Loading..."
+            ) : Date.now() / 1000 < auctionEndTime ? (
+              <>
+                Ends on 
+                {new Date(auctionEndTime * 1000).toLocaleString(navigator.language, {
+                  dateStyle: "full",
+                  timeStyle: "short",
+                })}
+              </>
+            ) : (
+              "Auction closed for new bids — awaiting admin to finalize"
+            )}
           </div>
 
           <Form className="mt-3">
