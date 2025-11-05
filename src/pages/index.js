@@ -33,12 +33,10 @@ export default function Home() {
 
 
   useEffect(() => {
-
     let init = async () => {
       await configurarBlochain();
       await loadAuctionData();
     }
-
     init();
 
   }, []);
@@ -74,12 +72,15 @@ export default function Home() {
     const list = [];
     for (let i = 0; i < count; i++) {
       const auction = await auctionContract.current.getAuction(i);
+      const userBid = account ? await auctionContract.current.bids(i, account) : 0;
+
       list.push({
         id: i,
         product: auction[0],
         winner: auction[1],
         bid: ethers.utils.formatEther(auction[2]),
         end: new Date(Number(auction[3]) * 1000).toLocaleString(navigator.language),
+        hasRefund: userBid.gt(0) && account.toLowerCase() !== auction[1].toLowerCase(),
       });
     }
     setAuctionList(list.reverse());
@@ -209,7 +210,7 @@ export default function Home() {
                 <strong>Status:</strong>{" "}
                 {Date.now() / 1000 < auctionEndTime ? (
                   <div>
-                    Ends on{" "}
+                    Ends on
                     {new Date(auctionEndTime * 1000).toLocaleString(navigator.language, {
                       dateStyle: "full",
                       timeStyle: "short",
@@ -275,7 +276,9 @@ export default function Home() {
                 <option value="">Select an auction</option>
                 {auctionList.map((a) => (
                   <option key={a.id} value={a.id}>
-                    #{a.id} – {a.product} ({a.bid} BNB)
+                    #{a.id + 1} – {a.product} ({a.bid} BNB)
+                    {a.hasRefund && " 💸 Refund available"}
+                    {account && a.winner.toLowerCase() === account.toLowerCase() && " 🏆 You won"}
                   </option>
                 ))}
               </Form.Select>
@@ -304,7 +307,7 @@ export default function Home() {
                 placeholder="Product name"
                 value={newProduct}
                 onChange={(e) => setNewProduct(e.target.value)}
-                disabled={!isAdmin|| auctionActive}
+                disabled={!isAdmin || auctionActive}
                 className="mb-2"
               />
               <Form.Control
@@ -312,7 +315,7 @@ export default function Home() {
                 placeholder="Duration in minutes"
                 value={newDuration}
                 onChange={(e) => setNewDuration(e.target.value)}
-                disabled={!isAdmin|| auctionActive}
+                disabled={!isAdmin || auctionActive}
                 className="mb-2"
               />
               <Button
