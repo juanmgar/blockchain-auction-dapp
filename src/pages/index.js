@@ -56,7 +56,7 @@ export default function Home() {
 
       let providerEthers = new ethers.providers.Web3Provider(provider);
       let signer = providerEthers.getSigner();
-      const auctionContractAddress = "0x993b1f2379b28ef76b8b67b4485dd3816cfa4d07";
+      const auctionContractAddress = "0x14a01707d6cb22c66ac82a474abfbb8c90934aed";
       auctionContract.current = new Contract(auctionContractAddress, auctionManifest.abi, signer);
       console.log("Connected to contract:", auctionContract.current);
 
@@ -304,7 +304,7 @@ export default function Home() {
                 placeholder="Product name"
                 value={newProduct}
                 onChange={(e) => setNewProduct(e.target.value)}
-                disabled={!isAdmin}
+                disabled={!isAdmin|| auctionActive}
                 className="mb-2"
               />
               <Form.Control
@@ -312,17 +312,24 @@ export default function Home() {
                 placeholder="Duration in minutes"
                 value={newDuration}
                 onChange={(e) => setNewDuration(e.target.value)}
-                disabled={!isAdmin}
+                disabled={!isAdmin|| auctionActive}
                 className="mb-2"
               />
               <Button
                 variant="primary"
                 onClick={createAuction}
-                disabled={!isAdmin}
+                disabled={!isAdmin || auctionActive}
                 className="w-100 mb-3"
               >
                 Create auction
               </Button>
+
+              {auctionActive && (
+                <Alert variant="info" className="mt-2 text-center">
+                  You cannot create a new auction until the current one is finalized by the admin.
+                </Alert>
+              )}
+
             </Form.Group>
 
             <Form.Group>
