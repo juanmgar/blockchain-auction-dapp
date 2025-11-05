@@ -72,7 +72,9 @@ export default function Home() {
     const list = [];
     for (let i = 0; i < count; i++) {
       const auction = await auctionContract.current.getAuction(i);
-      const userBid = account ? await auctionContract.current.bids(i, account) : 0;
+      const userBid = account
+        ? await auctionContract.current.bids(i, account)
+        : ethers.BigNumber.from(0);
 
       list.push({
         id: i,
