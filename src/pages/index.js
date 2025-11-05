@@ -192,13 +192,20 @@ export default function Home() {
           <div><strong>Puja más alta:</strong> {highestBid} BNB</div>
           <div><strong>Postor líder:</strong> {highestBidder}</div>
           <div>
-            <strong>Finaliza el:</strong>{" "}
-            {auctionEndTime
-              ? new Date(auctionEndTime * 1000).toLocaleString(navigator.language, {
-                dateStyle: "full",
-                timeStyle: "short",
-              })
-              : "Cargando..."}
+            <strong>Estado de la subasta:</strong>{" "}
+            {!auctionEndTime ? (
+              "Cargando..."
+            ) : Date.now() / 1000 < auctionEndTime ? (
+              <>
+                Finaliza el{" "}
+                {new Date(auctionEndTime * 1000).toLocaleString(navigator.language, {
+                  dateStyle: "full",
+                  timeStyle: "short",
+                })}
+              </>
+            ) : (
+              "Subasta cerrada a nuevas pujas — en espera de cierre del administrador"
+            )}
           </div>
 
           <Form className="mt-3">
