@@ -207,7 +207,6 @@ export default function Home() {
               "Subasta cerrada a nuevas pujas — en espera de cierre del administrador"
             )}
           </div>
-
           <Form className="mt-3">
             <Form.Control
               type="number"
@@ -220,15 +219,12 @@ export default function Home() {
               Realizar puja
             </Button>
           </Form>
-
           <hr />
           <Button variant="warning" className="w-100" onClick={endAuction}>
             Finalizar subasta
           </Button>
         </Card.Body>
       </Card>
-
-      {/* Historial */}
       <Card className="shadow-sm mb-4">
         <Card.Body>
           <Card.Title>Subastas finalizadas</Card.Title>
@@ -255,8 +251,7 @@ export default function Home() {
           )}
         </Card.Body>
       </Card>
-
-      {/* Panel de administración */}
+      <hr style={{ margin: "40px 0", borderTop: "2px solid #ccc" }} />
       <Card className="shadow-sm">
         <Card.Body>
           <Card.Title>Panel de administración</Card.Title>
@@ -266,7 +261,6 @@ export default function Home() {
                 Solo los administradores pueden ejecutar estas acciones.
               </Alert>
             )}
-
             <Form.Group className="mb-3">
               <Form.Label>Nueva subasta</Form.Label>
               <Form.Control
@@ -294,7 +288,6 @@ export default function Home() {
                 Crear subasta
               </Button>
             </Form.Group>
-
             <Form.Group>
               <Form.Label>Cambiar administrador</Form.Label>
               <Form.Control
