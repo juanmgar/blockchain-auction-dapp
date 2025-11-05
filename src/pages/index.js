@@ -116,6 +116,7 @@ export default function Home() {
       const tx = await auctionContract.current.endAuction();
       await tx.wait();
       alert("Subasta finalizada");
+      await loadAuctionData();
     } catch (err) {
       const decoded = decodeError(err);
       alert(`Error: ${decoded.error}`);
@@ -170,6 +171,7 @@ export default function Home() {
       alert("Nueva subasta creada correctamente");
       setNewProduct("");
       setNewDuration("");
+      await loadAuctionData();
     } catch (err) {
       const decoded = await decodeError(err);
       alert(`Error al crear subasta: ${decoded.reason || decoded}`);
