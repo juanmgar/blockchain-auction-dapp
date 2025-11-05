@@ -17,6 +17,7 @@ export default function Home() {
   const auctionContract = useRef(null);
 
   // Estado
+  const [auctionActive, setAuctionActive] = useState(false);
   const [account, setAccount] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [product, setProduct] = useState("");
@@ -86,7 +87,9 @@ export default function Home() {
     const bid = await auctionContract.current.highestBid();
     const bidder = await auctionContract.current.highestBidder();
     const end = await auctionContract.current.auctionEndTime();
+    const active = await auctionContract.current.auctionActive();
 
+    setAuctionActive(active);
     setProduct(productName);
     setHighestBid(ethers.utils.formatEther(bid));
     setHighestBidder(bidder);
@@ -95,6 +98,7 @@ export default function Home() {
 
   const placeBid = async () => {
     if (!newBid || isNaN(newBid) || Number(newBid) <= 0) {
+      await loadAuctionData();
       alert("Enter a valid amount");
       return;
     }
@@ -182,56 +186,87 @@ export default function Home() {
   return (
     <Container className="mt-4" style={{ maxWidth: "700px" }}>
       <h1>Blockchain Auction DApp</h1>
+
       <Card className="shadow-sm mb-4">
         <Card.Body>
           <Card.Title>Ongoing Auction</Card.Title>
-          <div>
-            <strong>Connected account:</strong>{" "}
-            {account ? account : <Spinner size="sm" animation="border" />}
-          </div>
-          <div><strong>Product:</strong> {product}</div>
-          <div><strong>Highest bid:</strong> {highestBid} BNB</div>
-          <div><strong>Highest bidder:</strong> {highestBidder}</div>
-          <div>
-            <strong>Status:</strong>{" "}
-            {!auctionEndTime ? (
-              "Loading..."
-            ) : Date.now() / 1000 < auctionEndTime ? (
-              <>
-                Ends on 
-                {new Date(auctionEndTime * 1000).toLocaleString(navigator.language, {
-                  dateStyle: "full",
-                  timeStyle: "short",
-                })}
-              </>
-            ) : (
-              "Auction closed for new bids — awaiting admin to finalize"
-            )}
-          </div>
 
-          <Form className="mt-3">
-            <Form.Control
-              type="number"
-              placeholder="Amount in BNB"
-              value={newBid}
-              onChange={(e) => setNewBid(e.target.value)}
-              className="mb-2"
-            />
-            <Button variant="primary" onClick={placeBid} className="w-100">
-              Place bid
-            </Button>
-          </Form>
+          {!auctionActive ? (
+            <Alert variant="info" className="text-center">
+              No active auction at the moment.
+            </Alert>
+          ) : (
+            <div>
+              <div>
+                <strong>Connected account:</strong>{" "}
+                {account ? account : <Spinner size="sm" animation="border" />}
+              </div>
+              <div><strong>Product:</strong> {product}</div>
+              <div><strong>Highest bid:</strong> {highestBid} BNB</div>
+              <div><strong>Highest bidder:</strong> {highestBidder}</div>
+
+              <div className="mt-2">
+                <strong>Status:</strong>{" "}
+                {Date.now() / 1000 < auctionEndTime ? (
+                  <div>
+                    Ends on{" "}
+                    {new Date(auctionEndTime * 1000).toLocaleString(navigator.language, {
+                      dateStyle: "full",
+                      timeStyle: "short",
+                    })}
+                  </div>
+                ) : (
+                  <span style={{ color: "orange" }}>
+                    Auction closed for new bids — awaiting admin to finalize
+                  </span>
+                )}
+              </div>
+
+              <Form className="mt-3">
+                <Form.Control
+                  type="number"
+                  placeholder="Amount in BNB"
+                  value={newBid}
+                  onChange={(e) => setNewBid(e.target.value)}
+                  disabled={Date.now() / 1000 >= auctionEndTime}
+                  className="mb-2"
+                />
+                <Button
+                  variant="primary"
+                  onClick={placeBid}
+                  className="w-100"
+                  disabled={Date.now() / 1000 >= auctionEndTime}
+                >
+                  Place bid
+                </Button>
+              </Form>
+
+              {isAdmin && Date.now() / 1000 >= auctionEndTime && (
+                <div className="mt-3">
+                  <Button
+                    variant="warning"
+                    className="w-100"
+                    onClick={endAuction}
+                    disabled={!auctionActive}
+                  >
+                    End auction
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
         </Card.Body>
       </Card>
 
-      {/* History */}
+
+
       <Card className="shadow-sm mb-4">
         <Card.Body>
           <Card.Title>Finished Auctions</Card.Title>
           {auctionList.length === 0 ? (
             <p>No finished auctions.</p>
           ) : (
-            <>
+            <div>
               <Form.Select
                 className="mb-2"
                 value={selectedAuction}
@@ -247,7 +282,7 @@ export default function Home() {
               <Button variant="secondary" className="w-100" onClick={handleWithdraw}>
                 Withdraw funds
               </Button>
-            </>
+            </div>
           )}
         </Card.Body>
       </Card>
@@ -261,9 +296,6 @@ export default function Home() {
                 Only administrators can perform these actions.
               </Alert>
             )}
-            <Button variant="warning" className="w-100" onClick={endAuction}>
-              End current auction
-            </Button>
 
             <Form.Group className="mb-3">
               <Form.Label>New auction</Form.Label>
