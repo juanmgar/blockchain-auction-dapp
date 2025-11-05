@@ -156,7 +156,7 @@ export default function Home() {
       setNewAdmin("");
     } catch (err) {
       const decoded = await decodeError(err);
-      alert(`Error changing administrator: ${decoded.reason || decoded}`);
+      alert(`Error changing administrator: ${decoded.error}`);
     }
   };
 
@@ -175,7 +175,7 @@ export default function Home() {
       await loadAuctionData();
     } catch (err) {
       const decoded = await decodeError(err);
-      alert(`Error creating auction: ${decoded.reason || decoded}`);
+      alert(`Error creating auction: ${decoded.error}`);
     }
   };
 
@@ -214,11 +214,6 @@ export default function Home() {
               Place bid
             </Button>
           </Form>
-
-          <hr />
-          <Button variant="warning" className="w-100" onClick={endAuction}>
-            End auction
-          </Button>
         </Card.Body>
       </Card>
 
@@ -259,6 +254,9 @@ export default function Home() {
                 Only administrators can perform these actions.
               </Alert>
             )}
+            <Button variant="warning" className="w-100" onClick={endAuction}>
+              End current auction
+            </Button>
 
             <Form.Group className="mb-3">
               <Form.Label>New auction</Form.Label>
