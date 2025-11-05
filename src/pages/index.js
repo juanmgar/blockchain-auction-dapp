@@ -95,7 +95,7 @@ export default function Home() {
 
   const placeBid = async () => {
     if (!newBid || isNaN(newBid) || Number(newBid) <= 0) {
-      alert("Introduce una cantidad válida");
+      alert("Enter a valid amount");
       return;
     }
     try {
@@ -103,7 +103,7 @@ export default function Home() {
         value: ethers.utils.parseEther(newBid),
       });
       await tx.wait();
-      alert("Puja realizada con éxito");
+      alert("Bid placed successfully");
       await loadAuctionData();
     } catch (err) {
       const decoded = decodeError(err);
@@ -115,7 +115,7 @@ export default function Home() {
     try {
       const tx = await auctionContract.current.endAuction();
       await tx.wait();
-      alert("Subasta finalizada");
+      alert("Auction ended");
       await loadAuctionData();
     } catch (err) {
       const decoded = decodeError(err);
@@ -125,13 +125,13 @@ export default function Home() {
 
   const handleWithdraw = async () => {
     if (selectedAuction === "") {
-      alert("Selecciona una subasta primero");
+      alert("Please select an auction first");
       return;
     }
     try {
       const tx = await auctionContract.current.withdraw(selectedAuction);
       await tx.wait();
-      alert("Fondos retirados correctamente");
+      alert("Funds withdrawn successfully");
     } catch (err) {
       const decoded = decodeError(err);
       alert(`Error: ${decoded.error}`);
@@ -145,36 +145,37 @@ export default function Home() {
 
   const handleChangeAdmin = async () => {
     if (!newAdmin || !ethers.utils.isAddress(newAdmin)) {
-      alert("Introduce una dirección válida");
+      alert("Enter a valid address");
       return;
     }
 
     try {
       const tx = await auctionContract.current.changeAdmin(newAdmin);
       await tx.wait();
-      alert("Administrador cambiado correctamente");
+      alert("Administrator changed successfully");
       setNewAdmin("");
     } catch (err) {
       const decoded = await decodeError(err);
-      alert(`Error al cambiar administrador: ${decoded.reason || decoded}`);
+      alert(`Error changing administrator: ${decoded.reason || decoded}`);
     }
   };
+
   const createAuction = async () => {
     if (!newProduct || !newDuration) {
-      alert("Introduce un nombre y duración válidos");
+      alert("Enter a valid name and duration");
       return;
     }
 
     try {
       const tx = await auctionContract.current.startNewAuction(newProduct, newDuration);
       await tx.wait();
-      alert("Nueva subasta creada correctamente");
+      alert("New auction created successfully");
       setNewProduct("");
       setNewDuration("");
       await loadAuctionData();
     } catch (err) {
       const decoded = await decodeError(err);
-      alert(`Error al crear subasta: ${decoded.reason || decoded}`);
+      alert(`Error creating auction: ${decoded.reason || decoded}`);
     }
   };
 
@@ -183,53 +184,50 @@ export default function Home() {
       <h1>Blockchain Auction DApp</h1>
       <Card className="shadow-sm mb-4">
         <Card.Body>
-          <Card.Title>Subasta en curso</Card.Title>
+          <Card.Title>Ongoing Auction</Card.Title>
           <div>
-            <strong>Cuenta conectada:</strong>{" "}
+            <strong>Connected account:</strong>{" "}
             {account ? account : <Spinner size="sm" animation="border" />}
           </div>
-          <div><strong>Producto:</strong> {product}</div>
-          <div><strong>Puja más alta:</strong> {highestBid} BNB</div>
-          <div><strong>Postor líder:</strong> {highestBidder}</div>
+          <div><strong>Product:</strong> {product}</div>
+          <div><strong>Highest bid:</strong> {highestBid} BNB</div>
+          <div><strong>Highest bidder:</strong> {highestBidder}</div>
           <div>
-            <strong>Estado de la subasta:</strong>{" "}
-            {!auctionEndTime ? (
-              "Cargando..."
-            ) : Date.now() / 1000 < auctionEndTime ? (
-              <>
-                Finaliza el{" "}
-                {new Date(auctionEndTime * 1000).toLocaleString(navigator.language, {
-                  dateStyle: "full",
-                  timeStyle: "short",
-                })}
-              </>
-            ) : (
-              "Subasta cerrada a nuevas pujas — en espera de cierre del administrador"
-            )}
+            <strong>Ends on:</strong>{" "}
+            {auctionEndTime
+              ? new Date(auctionEndTime * 1000).toLocaleString(navigator.language, {
+                dateStyle: "full",
+                timeStyle: "short",
+              })
+              : "Loading..."}
           </div>
+
           <Form className="mt-3">
             <Form.Control
               type="number"
-              placeholder="Cantidad en BNB"
+              placeholder="Amount in BNB"
               value={newBid}
               onChange={(e) => setNewBid(e.target.value)}
               className="mb-2"
             />
             <Button variant="primary" onClick={placeBid} className="w-100">
-              Realizar puja
+              Place bid
             </Button>
           </Form>
+
           <hr />
           <Button variant="warning" className="w-100" onClick={endAuction}>
-            Finalizar subasta
+            End auction
           </Button>
         </Card.Body>
       </Card>
+
+      {/* History */}
       <Card className="shadow-sm mb-4">
         <Card.Body>
-          <Card.Title>Subastas finalizadas</Card.Title>
+          <Card.Title>Finished Auctions</Card.Title>
           {auctionList.length === 0 ? (
-            <p>No hay subastas finalizadas.</p>
+            <p>No finished auctions.</p>
           ) : (
             <>
               <Form.Select
@@ -237,7 +235,7 @@ export default function Home() {
                 value={selectedAuction}
                 onChange={(e) => setSelectedAuction(e.target.value)}
               >
-                <option value="">Selecciona una subasta</option>
+                <option value="">Select an auction</option>
                 {auctionList.map((a) => (
                   <option key={a.id} value={a.id}>
                     #{a.id} – {a.product} ({a.bid} BNB)
@@ -245,7 +243,7 @@ export default function Home() {
                 ))}
               </Form.Select>
               <Button variant="secondary" className="w-100" onClick={handleWithdraw}>
-                Retirar fondos
+                Withdraw funds
               </Button>
             </>
           )}
@@ -254,18 +252,19 @@ export default function Home() {
       <hr style={{ margin: "40px 0", borderTop: "2px solid #ccc" }} />
       <Card className="shadow-sm">
         <Card.Body>
-          <Card.Title>Panel de administración</Card.Title>
+          <Card.Title>Admin Panel</Card.Title>
           <div style={{ opacity: isAdmin ? 1 : 0.5 }}>
             {!isAdmin && (
               <Alert variant="warning">
-                Solo los administradores pueden ejecutar estas acciones.
+                Only administrators can perform these actions.
               </Alert>
             )}
+
             <Form.Group className="mb-3">
-              <Form.Label>Nueva subasta</Form.Label>
+              <Form.Label>New auction</Form.Label>
               <Form.Control
                 type="text"
-                placeholder="Nombre del producto"
+                placeholder="Product name"
                 value={newProduct}
                 onChange={(e) => setNewProduct(e.target.value)}
                 disabled={!isAdmin}
@@ -273,7 +272,7 @@ export default function Home() {
               />
               <Form.Control
                 type="number"
-                placeholder="Duración en minutos"
+                placeholder="Duration in minutes"
                 value={newDuration}
                 onChange={(e) => setNewDuration(e.target.value)}
                 disabled={!isAdmin}
@@ -285,14 +284,15 @@ export default function Home() {
                 disabled={!isAdmin}
                 className="w-100 mb-3"
               >
-                Crear subasta
+                Create auction
               </Button>
             </Form.Group>
+
             <Form.Group>
-              <Form.Label>Cambiar administrador</Form.Label>
+              <Form.Label>Change administrator</Form.Label>
               <Form.Control
                 type="text"
-                placeholder="Dirección del nuevo admin"
+                placeholder="New admin address"
                 value={newAdmin}
                 onChange={(e) => setNewAdmin(e.target.value)}
                 disabled={!isAdmin}
@@ -304,7 +304,7 @@ export default function Home() {
                 disabled={!isAdmin}
                 className="w-100"
               >
-                Cambiar administrador
+                Change administrator
               </Button>
             </Form.Group>
           </div>
