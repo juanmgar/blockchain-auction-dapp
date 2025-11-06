@@ -211,7 +211,7 @@ export default function Home() {
     }
   };
 
-  
+
   return (
     <Container className="mt-4" style={{ maxWidth: "700px" }}>
       <h1>Blockchain Auction DApp</h1>
@@ -246,7 +246,7 @@ export default function Home() {
                   </div>
                 ) : (
                   <span style={{ color: "orange" }}>
-                    Auction closed for new bids — awaiting admin to finalize.
+                    Auction closed for new bids — awaiting admin to finalize.\
                     Users who did not win can withdraw their bids below.
                   </span>
                 )}
@@ -306,8 +306,10 @@ export default function Home() {
                 {auctionList.map((a) => (
                   <option key={a.id} value={a.id}>
                     #{a.id + 1} – {a.product} ({a.bid} BNB)
+                    {account && a.winner.toLowerCase() === account.toLowerCase()
+                      ? " 🏆 You won"
+                      : ` 👤 Winner: ${a.winner.substring(0, 6)}...${a.winner.slice(-4)}`}
                     {a.hasRefund && " 💸 Refund available"}
-                    {account && a.winner.toLowerCase() === account.toLowerCase() && " 🏆 You won"}
                   </option>
                 ))}
               </Form.Select>
