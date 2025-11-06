@@ -55,7 +55,7 @@ export default function Home() {
       // Crea una instancia de ethers.js con el signer actual
       let providerEthers = new ethers.providers.Web3Provider(provider);
       let signer = providerEthers.getSigner();
-      const auctionContractAddress = "0x464557c7932fd314e6feefb43f5904ba939ff2a9";
+      const auctionContractAddress = "0x4f96c16c3aa1e0ab476cf8cacbf5d639cb6aa4d3";
       auctionContract.current = new Contract(auctionContractAddress, auctionManifest.abi, signer);
       console.log("Connected to contract:", auctionContract.current);
 
