@@ -266,8 +266,8 @@ export default function Home() {
                   </div>
                 ) : (
                   <span style={{ color: "orange" }}>
-                    Auction closed for new bids — awaiting admin to finalize.\
-                    Users who did not win can withdraw their bids below.
+                    Auction closed for new bids — awaiting admin to finalize. <br />
+                    Users who did not win can withdraw their bids below after the auction closes.
                   </span>
                 )}
               </div>
