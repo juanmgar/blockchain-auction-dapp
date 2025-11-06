@@ -54,7 +54,7 @@ export default function Home() {
 
       let providerEthers = new ethers.providers.Web3Provider(provider);
       let signer = providerEthers.getSigner();
-      const auctionContractAddress = "0xe3021edebdebb9b5f44e20e267a9f50d966e9dc0";
+      const auctionContractAddress = "0x464557c7932fd314e6feefb43f5904ba939ff2a9";
       auctionContract.current = new Contract(auctionContractAddress, auctionManifest.abi, signer);
       console.log("Connected to contract:", auctionContract.current);
 
@@ -101,7 +101,6 @@ export default function Home() {
 
   const placeBid = async () => {
     if (!newBid || isNaN(newBid) || Number(newBid) <= 0) {
-      await loadAuctionData();
       alert("Enter a valid amount");
       return;
     }
@@ -111,10 +110,12 @@ export default function Home() {
       });
       await tx.wait();
       alert("Bid placed successfully");
+      setNewBid("");
       await loadAuctionData();
     } catch (err) {
       const decoded = decodeError(err);
       alert(`Error: ${decoded.error}`);
+      await loadAuctionData();
     }
   };
 
@@ -212,7 +213,7 @@ export default function Home() {
                 <strong>Status:</strong>{" "}
                 {Date.now() / 1000 < auctionEndTime ? (
                   <div>
-                    Ends on
+                    Ends on{" "}
                     {new Date(auctionEndTime * 1000).toLocaleString(navigator.language, {
                       dateStyle: "full",
                       timeStyle: "short",
