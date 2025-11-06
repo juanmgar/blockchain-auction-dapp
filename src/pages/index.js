@@ -30,6 +30,8 @@ export default function Home() {
   const [newProduct, setNewProduct] = useState("");
   const [newDuration, setNewDuration] = useState("");
   const [newAdmin, setNewAdmin] = useState("");
+  const [searchId, setSearchId] = useState("");
+  const [searchResult, setSearchResult] = useState(null);
 
   // Se ejecuta al cargar el componente
   useEffect(() => {
@@ -211,6 +213,24 @@ export default function Home() {
     }
   };
 
+  // Busca el ganador de una subasta por ID
+  const findWinner = async () => {
+    if (searchId === "" || isNaN(searchId)) {
+      alert("Enter a valid auction ID");
+      return;
+    }
+
+    try {
+      const auction = await auctionContract.current.getAuction(searchId);
+      const winner = auction[1];
+      const bid = ethers.utils.formatEther(auction[2]);
+      setSearchResult({ id: searchId, winner, bid });
+    } catch (err) {
+      const decoded = decodeError(err);
+      alert(`Error: ${decoded.error}`);
+    }
+  };
+
 
   return (
     <Container className="mt-4" style={{ maxWidth: "700px" }}>
@@ -320,6 +340,39 @@ export default function Home() {
           )}
         </Card.Body>
       </Card>
+      <Card className="shadow-sm mb-4">
+        <Card.Body>
+          <Card.Title>Search Winner by Auction ID</Card.Title>
+
+          <Form.Control
+            type="number"
+            placeholder="Enter auction ID"
+            value={searchId}
+            onChange={(e) => setSearchId(e.target.value)}
+            className="mb-2"
+          />
+          <Button variant="info" className="w-100 mb-3" onClick={findWinner}>
+            Find Winner
+          </Button>
+
+          {searchResult && (
+            <Alert variant="light" className="text-center">
+              <div><strong>Auction #{searchResult.id}</strong></div>
+              <div>Winner:
+                <a
+                  href={`https://testnet.bscscan.com/address/${searchResult.winner}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {" "}{searchResult.winner.substring(0, 8)}...{searchResult.winner.slice(-4)}
+                </a>
+              </div>
+              <div>Winning bid: {searchResult.bid} BNB</div>
+            </Alert>
+          )}
+        </Card.Body>
+      </Card>
+
       <hr style={{ margin: "40px 0", borderTop: "2px solid #ccc" }} />
       <Card className="shadow-sm">
         <Card.Body>
