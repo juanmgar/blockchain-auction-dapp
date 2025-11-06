@@ -105,6 +105,15 @@ export default function Home() {
       return;
     }
     try {
+      // Verificar si ya ha pujado en la subasta actual
+      const currentAuctionId = await auctionContract.current.getHistoricalAuctionCount();
+      const existingBid = await auctionContract.current.bids(currentAuctionId, account);
+      if (existingBid.gt(0)) {
+        alert("You have already placed a bid in this auction.");
+        setNewBid("");
+        return;
+      }
+
       const tx = await auctionContract.current.placeBid({
         value: ethers.utils.parseEther(newBid),
       });
@@ -221,7 +230,8 @@ export default function Home() {
                   </div>
                 ) : (
                   <span style={{ color: "orange" }}>
-                    Auction closed for new bids — awaiting admin to finalize
+                    Auction closed for new bids — awaiting admin to finalize.
+                    Users who did not win can withdraw their bids below.
                   </span>
                 )}
               </div>
