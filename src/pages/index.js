@@ -325,7 +325,7 @@ export default function Home() {
                 <option value="">Select an auction</option>
                 {auctionList.map((a) => (
                   <option key={a.id} value={a.id}>
-                    #{a.id + 1} – {a.product} ({a.bid} BNB)
+                    ID{a.id} – {a.product} ({a.bid} BNB)
                     {account && a.winner.toLowerCase() === account.toLowerCase()
                       ? " 🏆 You won"
                       : ` 👤 Winner: ${a.winner.substring(0, 6)}...${a.winner.slice(-4)}`}
