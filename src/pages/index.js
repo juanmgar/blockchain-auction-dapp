@@ -1,22 +1,10 @@
-import detectEthereumProvider from "@metamask/detect-provider";
-import { decodeError } from "@ubiquity-os/ethers-decode-error";
-import { Contract, ethers } from "ethers";
-import { useEffect, useRef, useState } from "react";
-import auctionManifest from "../contracts/Auction.json";
-import {
-  Container,
-  Card,
-  Button,
-  Form,
-  Alert,
-  Spinner,
-} from "react-bootstrap";
+
 
 export default function AuctionApp() {
   // Referencia al contrato desplegado
   const auctionContract = useRef(null);
 
-  // Variables de estado de la aplicación
+  // Estados principales de la aplicación
   const [auctionActive, setAuctionActive] = useState(false);
   const [account, setAccount] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
@@ -33,9 +21,10 @@ export default function AuctionApp() {
   const [searchId, setSearchId] = useState("");
   const [searchResult, setSearchResult] = useState(null);
 
-  // Direcciones desplegadas
+  // Dirección del contrato desplegado (BSC Testnet)
   const auctionContractAddress = "0x4f96c16c3aa1e0ab476cf8cacbf5d639cb6aa4d3";
 
+  // Hook principal: inicializa conexión y actualiza datos cada 6 segundos
   useEffect(() => {
     let init = async () => {
       await configurarBlochain();
@@ -46,7 +35,7 @@ export default function AuctionApp() {
     init();
   }, []);
 
-  // Configura la conexión con Metamask y el contrato
+  // Configura conexión con MetaMask y crea instancia del contrato
   const configurarBlochain = async () => {
     const provider = await detectEthereumProvider();
     if (provider) {
@@ -58,10 +47,11 @@ export default function AuctionApp() {
       const accounts = await provider.request({ method: "eth_accounts" });
       setAccount(accounts[0]);
 
-      // Crea una instancia de ethers.js con el signer actual
+      // Crea proveedor y signer de ethers.js
       let providerEthers = new ethers.providers.Web3Provider(provider);
       let signer = providerEthers.getSigner();
 
+      // Instancia el contrato con su ABI y dirección
       auctionContract.current = new Contract(auctionContractAddress, auctionManifest.abi, signer);
       console.log("Connected to contract:", auctionContract.current);
 
@@ -71,14 +61,14 @@ export default function AuctionApp() {
     }
   };
 
-  // Carga información de subastas actuales e históricas
+  // Carga subastas activas e históricas desde el contrato
   const loadAuctionData = async () => {
     if (!auctionContract.current) return;
 
     const count = await auctionContract.current.getHistoricalAuctionCount();
     const list = [];
 
-    // Recorre el historial de subastas
+    // Itera sobre el historial de subastas y genera objetos para la UI
     for (let i = 0; i < count; i++) {
       const auction = await auctionContract.current.getAuction(i);
       const userBid = account
@@ -96,10 +86,10 @@ export default function AuctionApp() {
       });
     }
 
-    // Guarda el historial invertido (últimas subastas primero)
+    // Guarda el historial (orden inverso, subastas recientes primero)
     setAuctionList(list.reverse());
 
-    // Carga datos de la subasta activa
+    // Carga información de la subasta en curso
     const productName = await auctionContract.current.currentProduct();
     const bid = await auctionContract.current.highestBid();
     const bidder = await auctionContract.current.highestBidder();
@@ -113,14 +103,14 @@ export default function AuctionApp() {
     setAuctionEndTime(Number(end));
   };
 
-  // Envía una nueva puja
+  // Envía una nueva puja en la subasta actual
   const placeBid = async () => {
     if (!newBid || isNaN(newBid) || Number(newBid) <= 0) {
       alert("Enter a valid amount");
       return;
     }
     try {
-      // Evita que el usuario puje más de una vez
+      // Verifica que el usuario no haya pujado antes
       const currentAuctionId = await auctionContract.current.getHistoricalAuctionCount();
       const existingBid = await auctionContract.current.bids(currentAuctionId, account);
       if (existingBid.gt(0)) {
@@ -145,7 +135,7 @@ export default function AuctionApp() {
     }
   };
 
-  // Finaliza una subasta (solo admin)
+  // Admin: Finaliza una subasta
   const endAuction = async () => {
     try {
       const tx = await auctionContract.current.endAuction();
@@ -159,7 +149,7 @@ export default function AuctionApp() {
     }
   };
 
-  // Retira fondos de una subasta finalizada
+  // Permite retirar fondos de una subasta terminada
   const handleWithdraw = async () => {
     if (selectedAuction === "") {
       alert("❌ Please select an auction first");
@@ -176,13 +166,13 @@ export default function AuctionApp() {
     }
   };
 
-  // Verifica si la cuenta conectada es administradora
+  // Verifica si la cuenta actual es la administradora
   const checkAdmin = async (acct) => {
     const admin = await auctionContract.current.admin();
     setIsAdmin(admin.toLowerCase() == acct.toLowerCase());
   };
 
-  // Cambia la dirección del administrador del contrato
+  // Admin: Permite cambiar la dirección del administrador del contrato
   const handleChangeAdmin = async () => {
     if (!newAdmin || !ethers.utils.isAddress(newAdmin)) {
       alert("❌ Enter a valid address");
@@ -201,7 +191,7 @@ export default function AuctionApp() {
     }
   };
 
-  // Crea una nueva subasta (solo admin)
+  // Admin: Crea una nueva subasta
   const createAuction = async () => {
     if (!newProduct || !newDuration) {
       alert("❌ Enter a valid name and duration");
@@ -222,7 +212,7 @@ export default function AuctionApp() {
     }
   };
 
-  // Busca el ganador de una subasta por ID
+  // Busca el ganador de una subasta específica por su ID
   const findWinner = async () => {
     if (searchId === "" || isNaN(searchId)) {
       alert("❌ Enter a valid auction ID");
@@ -237,14 +227,16 @@ export default function AuctionApp() {
     } catch (err) {
       const decoded = decodeError(err);
       const msg = decoded?.error || err.reason || err.message;
-      alert(`❌ Error: ${msg}`);    }
+      alert(`❌ Error: ${msg}`);
+    }
   };
 
-
+  // Render principal de la aplicación
   return (
     <Container className="mt-4" style={{ maxWidth: "700px" }}>
       <h1 className="text-center mb-4">Blockchain Auction DApp</h1>
 
+      {/* Bloque de subasta activa */}
       <Card className="shadow-sm mb-4">
         <Card.Body>
           <Card.Title>Ongoing Auction</Card.Title>
@@ -263,6 +255,7 @@ export default function AuctionApp() {
               <div><strong>Highest bid:</strong> {highestBid} BNB</div>
               <div><strong>Highest bidder:</strong> {highestBidder}</div>
 
+              {/* Información temporal de la subasta */}
               <div className="mt-2">
                 <strong>Status:</strong>{" "}
                 {Date.now() / 1000 < auctionEndTime ? (
@@ -281,6 +274,7 @@ export default function AuctionApp() {
                 )}
               </div>
 
+              {/* Formulario de puja */}
               <Form className="mt-3">
                 <Form.Control
                   type="number"
@@ -300,6 +294,7 @@ export default function AuctionApp() {
                 </Button>
               </Form>
 
+              {/* Botón de finalizar subasta (solo admin) */}
               {isAdmin && Date.now() / 1000 >= auctionEndTime && (
                 <div className="mt-3">
                   <Button
@@ -316,6 +311,8 @@ export default function AuctionApp() {
           )}
         </Card.Body>
       </Card>
+
+      {/* Bloque de subastas finalizadas */}
       <Card className="shadow-sm mb-4">
         <Card.Body>
           <Card.Title>Finished Auctions</Card.Title>
@@ -346,6 +343,8 @@ export default function AuctionApp() {
           )}
         </Card.Body>
       </Card>
+
+      {/* Buscador de ganadores por ID */}
       <Card className="shadow-sm mb-4">
         <Card.Body>
           <Card.Title>Search Winner by Auction ID</Card.Title>
@@ -379,6 +378,7 @@ export default function AuctionApp() {
         </Card.Body>
       </Card>
 
+      {/* Panel de administración */}
       <hr style={{ margin: "40px 0", borderTop: "2px solid #ccc" }} />
       <Card className="shadow-sm">
         <Card.Body>
@@ -390,6 +390,7 @@ export default function AuctionApp() {
               </Alert>
             )}
 
+            {/* Crear nueva subasta */}
             <Form.Group className="mb-3">
               <Form.Label>New auction</Form.Label>
               <Form.Control
@@ -425,6 +426,7 @@ export default function AuctionApp() {
 
             </Form.Group>
 
+            {/* Cambiar administrador */}
             <Form.Group>
               <Form.Label>Change administrator</Form.Label>
               <Form.Control
@@ -447,6 +449,8 @@ export default function AuctionApp() {
           </div>
         </Card.Body>
       </Card>
+
+      {/* Pie de página */}
       <footer className="text-center mt-4 text-muted">
         <small>Desarrollado por JuanMa Sierra – Proyecto Subastas (BSC Testnet)</small>
       </footer>
