@@ -1,5 +1,8 @@
 {
-  "projects": {
-    "default": "blockchain-auction-dapp"
-  }
+    "projects": {
+          "default": "blockchain-auction-dapp"
+    }
+}
+
+    }
 }

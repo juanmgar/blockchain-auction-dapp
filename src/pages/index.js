@@ -12,7 +12,7 @@ import {
   Spinner,
 } from "react-bootstrap";
 
-export default function Home() {
+export default function AuctionApp() {
   // Referencia al contrato desplegado
   const auctionContract = useRef(null);
 
@@ -33,11 +33,15 @@ export default function Home() {
   const [searchId, setSearchId] = useState("");
   const [searchResult, setSearchResult] = useState(null);
 
-  // Se ejecuta al cargar el componente
+  // Direcciones desplegadas
+  const auctionContractAddress = "0x4f96c16c3aa1e0ab476cf8cacbf5d639cb6aa4d3";
+
   useEffect(() => {
     let init = async () => {
-      await configurarBlochain(); // conexión con Metamask y contrato
-      await loadAuctionData(); // carga de datos de subastas
+      await configurarBlochain();
+      await loadAuctionData();
+      const interval = setInterval(loadAuctionData, 6000);
+      return () => clearInterval(interval);
     };
     init();
   }, []);
@@ -57,7 +61,7 @@ export default function Home() {
       // Crea una instancia de ethers.js con el signer actual
       let providerEthers = new ethers.providers.Web3Provider(provider);
       let signer = providerEthers.getSigner();
-      const auctionContractAddress = "0x4f96c16c3aa1e0ab476cf8cacbf5d639cb6aa4d3";
+
       auctionContract.current = new Contract(auctionContractAddress, auctionManifest.abi, signer);
       console.log("Connected to contract:", auctionContract.current);
 
@@ -120,7 +124,7 @@ export default function Home() {
       const currentAuctionId = await auctionContract.current.getHistoricalAuctionCount();
       const existingBid = await auctionContract.current.bids(currentAuctionId, account);
       if (existingBid.gt(0)) {
-        alert("You have already placed a bid in this auction.");
+        alert("❌ You have already placed a bid in this auction.");
         setNewBid("");
         return;
       }
@@ -130,12 +134,13 @@ export default function Home() {
         value: ethers.utils.parseEther(newBid),
       });
       await tx.wait();
-      alert("Bid placed successfully");
+      alert("✅ Bid placed successfully");
       setNewBid("");
       await loadAuctionData();
     } catch (err) {
       const decoded = decodeError(err);
-      alert(`Error: ${decoded.error}`);
+      const msg = decoded?.error || err.reason || err.message;
+      alert(`❌ Error: ${msg}`);
       await loadAuctionData();
     }
   };
@@ -145,27 +150,29 @@ export default function Home() {
     try {
       const tx = await auctionContract.current.endAuction();
       await tx.wait();
-      alert("Auction ended");
+      alert("✅ Auction ended successfully");
       await loadAuctionData();
     } catch (err) {
       const decoded = decodeError(err);
-      alert(`Error: ${decoded.error}`);
+      const msg = decoded?.error || err.reason || err.message;
+      alert(`❌ Error: ${msg}`);
     }
   };
 
   // Retira fondos de una subasta finalizada
   const handleWithdraw = async () => {
     if (selectedAuction === "") {
-      alert("Please select an auction first");
+      alert("❌ Please select an auction first");
       return;
     }
     try {
       const tx = await auctionContract.current.withdraw(selectedAuction);
       await tx.wait();
-      alert("Funds withdrawn successfully");
+      alert("✅ Funds withdrawn successfully");
     } catch (err) {
       const decoded = decodeError(err);
-      alert(`Error: ${decoded.error}`);
+      const msg = decoded?.error || err.reason || err.message;
+      alert(`❌ Error: ${msg}`);
     }
   };
 
@@ -178,45 +185,47 @@ export default function Home() {
   // Cambia la dirección del administrador del contrato
   const handleChangeAdmin = async () => {
     if (!newAdmin || !ethers.utils.isAddress(newAdmin)) {
-      alert("Enter a valid address");
+      alert("❌ Enter a valid address");
       return;
     }
 
     try {
       const tx = await auctionContract.current.changeAdmin(newAdmin);
       await tx.wait();
-      alert("Administrator changed successfully");
+      alert("✅ Administrator changed successfully");
       setNewAdmin("");
     } catch (err) {
       const decoded = await decodeError(err);
-      alert(`Error changing administrator: ${decoded.error}`);
+      const msg = decoded?.error || err.reason || err.message;
+      alert(`❌ Error: ${msg}`);
     }
   };
 
   // Crea una nueva subasta (solo admin)
   const createAuction = async () => {
     if (!newProduct || !newDuration) {
-      alert("Enter a valid name and duration");
+      alert("❌ Enter a valid name and duration");
       return;
     }
 
     try {
       const tx = await auctionContract.current.startNewAuction(newProduct, newDuration);
       await tx.wait();
-      alert("New auction created successfully");
+      alert("✅ New auction created successfully");
       setNewProduct("");
       setNewDuration("");
       await loadAuctionData();
     } catch (err) {
       const decoded = await decodeError(err);
-      alert(`Error creating auction: ${decoded.error}`);
+      const msg = decoded?.error || err.reason || err.message;
+      alert(`Error creating auction: ${msg}`);
     }
   };
 
   // Busca el ganador de una subasta por ID
   const findWinner = async () => {
     if (searchId === "" || isNaN(searchId)) {
-      alert("Enter a valid auction ID");
+      alert("❌ Enter a valid auction ID");
       return;
     }
 
@@ -227,14 +236,14 @@ export default function Home() {
       setSearchResult({ id: searchId, winner, bid });
     } catch (err) {
       const decoded = decodeError(err);
-      alert(`Error: ${decoded.error}`);
-    }
+      const msg = decoded?.error || err.reason || err.message;
+      alert(`❌ Error: ${msg}`);    }
   };
 
 
   return (
     <Container className="mt-4" style={{ maxWidth: "700px" }}>
-      <h1>Blockchain Auction DApp</h1>
+      <h1 className="text-center mb-4">Blockchain Auction DApp</h1>
 
       <Card className="shadow-sm mb-4">
         <Card.Body>
@@ -287,7 +296,7 @@ export default function Home() {
                   className="w-100"
                   disabled={Date.now() / 1000 >= auctionEndTime}
                 >
-                  Place bid
+                  💰 Place bid
                 </Button>
               </Form>
 
@@ -307,9 +316,6 @@ export default function Home() {
           )}
         </Card.Body>
       </Card>
-
-
-
       <Card className="shadow-sm mb-4">
         <Card.Body>
           <Card.Title>Finished Auctions</Card.Title>
@@ -334,7 +340,7 @@ export default function Home() {
                 ))}
               </Form.Select>
               <Button variant="secondary" className="w-100" onClick={handleWithdraw}>
-                Withdraw funds
+              💸 Withdraw funds
               </Button>
             </div>
           )}
@@ -352,7 +358,7 @@ export default function Home() {
             className="mb-2"
           />
           <Button variant="info" className="w-100 mb-3" onClick={findWinner}>
-            Find Winner
+          🏆 Find Winner
           </Button>
 
           {searchResult && (
@@ -408,7 +414,7 @@ export default function Home() {
                 disabled={!isAdmin || auctionActive}
                 className="w-100 mb-3"
               >
-                Create auction
+                👨🏻‍⚖️ Create auction
               </Button>
 
               {auctionActive && (
@@ -441,6 +447,9 @@ export default function Home() {
           </div>
         </Card.Body>
       </Card>
+      <footer className="text-center mt-4 text-muted">
+        <small>Desarrollado por JuanMa Sierra – Proyecto Subastas (BSC Testnet)</small>
+      </footer>
     </Container>
   );
 }
