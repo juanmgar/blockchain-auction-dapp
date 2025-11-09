@@ -1,4 +1,16 @@
-
+import detectEthereumProvider from "@metamask/detect-provider";
+import { decodeError } from "@ubiquity-os/ethers-decode-error";
+import { Contract, ethers } from "ethers";
+import { useEffect, useRef, useState } from "react";
+import auctionManifest from "../contracts/Auction.json";
+import {
+  Container,
+  Card,
+  Button,
+  Form,
+  Alert,
+  Spinner,
+} from "react-bootstrap";
 
 export default function AuctionApp() {
   // Referencia al contrato desplegado
@@ -253,7 +265,10 @@ export default function AuctionApp() {
               </div>
               <div><strong>Product:</strong> {product}</div>
               <div><strong>Highest bid:</strong> {highestBid} BNB</div>
-              <div><strong>Highest bidder:</strong> {highestBidder}</div>
+              <div>  <strong>Highest bidder:</strong>{" "}
+                {highestBidder === "0x0000000000000000000000000000000000000000"
+                  ? "— No bids yet —"
+                  : highestBidder}</div>
 
               {/* Información temporal de la subasta */}
               <div className="mt-2">
@@ -329,9 +344,11 @@ export default function AuctionApp() {
                 {auctionList.map((a) => (
                   <option key={a.id} value={a.id}>
                     ID{a.id} – {a.product} ({a.bid} BNB)
-                    {account && a.winner.toLowerCase() === account.toLowerCase()
-                      ? " 🏆 You won"
-                      : ` 👤 Winner: ${a.winner.substring(0, 6)}...${a.winner.slice(-4)}`}
+                    {a.winner === "0x0000000000000000000000000000000000000000"
+                      ? " ❌ No winner (no bids)"
+                      : account && a.winner.toLowerCase() === account.toLowerCase()
+                        ? " 🏆 You won"
+                        : ` 👤 Winner: ${a.winner.substring(0, 6)}...${a.winner.slice(-4)}`}
                     {a.hasRefund && " 💸 Refund available"}
                   </option>
                 ))}
@@ -359,22 +376,30 @@ export default function AuctionApp() {
           <Button variant="info" className="w-100 mb-3" onClick={findWinner}>
           🏆 Find Winner
           </Button>
+          {searchResult && searchResult.winner ? (
+            searchResult.winner === "0x0000000000000000000000000000000000000000" ? (
+              <Alert variant="warning" className="text-center">
+                <strong>Auction #{searchResult.id}</strong><br />
+                ❌ No winner — no valid bids were placed.
+              </Alert>
+            ) : (
+              <Alert variant="light" className="text-center">
+                <div><strong>Auction #{searchResult.id}</strong></div>
+                <div>
+                  Winner:
+                  <a
+                    href={`https://testnet.bscscan.com/address/${searchResult.winner}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {" "}{searchResult.winner.substring(0, 8)}...{searchResult.winner.slice(-4)}
+                  </a>
+                </div>
+                <div>Winning bid: {searchResult.bid} BNB</div>
+              </Alert>
+            )
+          ) : null}
 
-          {searchResult && (
-            <Alert variant="light" className="text-center">
-              <div><strong>Auction #{searchResult.id}</strong></div>
-              <div>Winner:
-                <a
-                  href={`https://testnet.bscscan.com/address/${searchResult.winner}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {" "}{searchResult.winner.substring(0, 8)}...{searchResult.winner.slice(-4)}
-                </a>
-              </div>
-              <div>Winning bid: {searchResult.bid} BNB</div>
-            </Alert>
-          )}
         </Card.Body>
       </Card>
 
